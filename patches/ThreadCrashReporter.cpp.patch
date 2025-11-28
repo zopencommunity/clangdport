@@ -1,0 +1,56 @@
+diff --git a/clang-tools-extra/clangd/support/ThreadCrashReporter.cpp b/clang-tools-extra/clangd/support/ThreadCrashReporter.cpp
+index 9551bbfda..44991e935 100644
+--- a/clang-tools-extra/clangd/support/ThreadCrashReporter.cpp
++++ b/clang-tools-extra/clangd/support/ThreadCrashReporter.cpp
+@@ -9,11 +9,51 @@
+ #include "support/ThreadCrashReporter.h"
+ #include <atomic>
+ 
++#ifdef __MVS__
++#include <pthread.h>
++#endif
++
+ namespace clang {
+ namespace clangd {
+ 
++#ifdef __MVS__
++// z/OS does not support thread_local storage.
++// Use POSIX Thread-Specific Data (TSD) instead.
++
++namespace {
++
++static pthread_key_t reporterKey;
++static pthread_once_t reporterKeyOnce = PTHREAD_ONCE_INIT;
++
++// No destructor needed - the reporter is stack-allocated and managed by RAII
++static void createReporterKey() {
++  pthread_key_create(&reporterKey, nullptr);
++}
++
++} // anonymous namespace
++
++static ThreadCrashReporter *&getCurrentReporter() {
++  pthread_once(&reporterKeyOnce, createReporterKey);
++  
++  // We store a pointer to a pointer, so we can modify the thread-local pointer
++  ThreadCrashReporter **ptr = 
++      static_cast<ThreadCrashReporter **>(pthread_getspecific(reporterKey));
++  if (!ptr) {
++    ptr = new ThreadCrashReporter *(nullptr);
++    pthread_setspecific(reporterKey, ptr);
++  }
++  return *ptr;
++}
++
++#define CurrentReporter getCurrentReporter()
++
++#else
++// Non-z/OS platforms: use thread_local
++
+ static thread_local ThreadCrashReporter *CurrentReporter = nullptr;
+ 
++#endif // __MVS__
++
+ void ThreadCrashReporter::runCrashHandlers() {
+   // No signal handling is done here on top of what AddSignalHandler() does:
+   // on Windows the signal handling is implmented via

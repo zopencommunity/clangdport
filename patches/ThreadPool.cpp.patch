@@ -1,0 +1,16 @@
+diff --git a/llvm/lib/Support/ThreadPool.cpp b/llvm/lib/Support/ThreadPool.cpp
+index c304f0f45..8a9893efb 100644
+--- a/llvm/lib/Support/ThreadPool.cpp
++++ b/llvm/lib/Support/ThreadPool.cpp
+@@ -169,7 +169,11 @@ bool StdThreadPool::isWorkerThread() const {
+   llvm::sys::ScopedReader LockGuard(ThreadsLock);
+   llvm::thread::id CurrentThreadId = llvm::this_thread::get_id();
+   for (const llvm::thread &Thread : Threads)
++#ifdef __MVS__
++    if (pthread_equal(CurrentThreadId, Thread.get_id()))
++#else
+     if (CurrentThreadId == Thread.get_id())
++#endif
+       return true;
+   return false;
+ }

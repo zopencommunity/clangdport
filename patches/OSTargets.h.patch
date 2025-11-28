@@ -1,0 +1,16 @@
+diff --git a/clang/lib/Basic/Targets/OSTargets.h b/clang/lib/Basic/Targets/OSTargets.h
+index c1a68f464..6aef0bcdf 100644
+--- a/clang/lib/Basic/Targets/OSTargets.h
++++ b/clang/lib/Basic/Targets/OSTargets.h
+@@ -810,6 +810,11 @@ protected:
+       Builder.defineMacro("__wchar_t");
+     }
+ 
++    // Map z/OS-specific builtin type to standard equivalent.
++    // z/OS system headers use __builtin_zos_va_list but upstream Clang
++    // only provides __builtin_va_list.
++    Builder.defineMacro("__builtin_zos_va_list", "__builtin_va_list");
++
+     this->PlatformName = llvm::Triple::getOSTypeName(Triple.getOS());
+   }
+ 

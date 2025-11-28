@@ -1,0 +1,45 @@
+diff --git a/llvm/include/llvm/Support/thread.h b/llvm/include/llvm/Support/thread.h
+index 16e322bfd..086c293ac 100644
+--- a/llvm/include/llvm/Support/thread.h
++++ b/llvm/include/llvm/Support/thread.h
+@@ -18,6 +18,9 @@
+ 
+ #include "llvm/Config/llvm-config.h"
+ #include "llvm/Support/Compiler.h"
++#ifdef __MVS__
++#include <pthread.h>
++#endif
+ #include <optional>
+ #include <tuple>
+ #include <utility>
+@@ -97,7 +100,15 @@ public:
+     return *this;
+   }
+ 
+-  bool joinable() const noexcept { return Thread != native_handle_type(); }
++  bool joinable() const noexcept {
++#ifdef __MVS__
++    // On z/OS, pthread_t is a struct and cannot be compared with !=
++    native_handle_type default_handle = native_handle_type();
++    return !pthread_equal(Thread, default_handle);
++#else
++    return Thread != native_handle_type();
++#endif
++  }
+ 
+   inline id get_id() const noexcept;
+ 
+@@ -133,7 +144,13 @@ thread::thread(std::optional<unsigned> StackSizeInBytes, Function &&f,
+ 
+   Thread = llvm_execute_on_thread_impl(ThreadProxy<CalleeTuple>, Callee.get(),
+                                        StackSizeInBytes);
++#ifdef __MVS__
++  // On z/OS, pthread_t is a struct and cannot be compared with !=
++  native_handle_type default_handle = native_handle_type();
++  if (!pthread_equal(Thread, default_handle))
++#else
+   if (Thread != native_handle_type())
++#endif
+     Callee.release();
+ }
+ 

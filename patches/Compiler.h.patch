@@ -1,0 +1,16 @@
+diff --git a/llvm/include/llvm/Support/Compiler.h b/llvm/include/llvm/Support/Compiler.h
+index 297d3e9b0..95defc8cc 100644
+--- a/llvm/include/llvm/Support/Compiler.h
++++ b/llvm/include/llvm/Support/Compiler.h
+@@ -666,7 +666,10 @@ void AnnotateIgnoreWritesEnd(const char *file, int line);
+ /// appropriate for use with a pointer, integer, or small aggregation of
+ /// pointers and integers.
+ #if LLVM_ENABLE_THREADS
+-#if __has_feature(cxx_thread_local) || defined(_MSC_VER)
++#if defined(__MVS__)
++// z/OS does not support thread-local storage with __thread
++#define LLVM_THREAD_LOCAL
++#elif __has_feature(cxx_thread_local) || defined(_MSC_VER)
+ #define LLVM_THREAD_LOCAL thread_local
+ #else
+ // Clang, GCC, and other compatible compilers used __thread prior to C++11 and

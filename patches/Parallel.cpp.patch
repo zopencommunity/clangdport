@@ -1,0 +1,15 @@
+diff --git a/llvm/lib/Support/Parallel.cpp b/llvm/lib/Support/Parallel.cpp
+index 2ba02b73d..24683b921 100644
+--- a/llvm/lib/Support/Parallel.cpp
++++ b/llvm/lib/Support/Parallel.cpp
+@@ -22,8 +22,8 @@ namespace llvm {
+ namespace parallel {
+ #if LLVM_ENABLE_THREADS
+ 
+-#ifdef _WIN32
+-static thread_local unsigned threadIndex = UINT_MAX;
++#if defined(_WIN32) || defined(__MVS__)
++static unsigned threadIndex = UINT_MAX;
+ 
+ unsigned getThreadIndex() { GET_THREAD_INDEX_IMPL; }
+ #else

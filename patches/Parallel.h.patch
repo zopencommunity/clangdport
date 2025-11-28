@@ -1,0 +1,16 @@
+diff --git a/llvm/include/llvm/Support/Parallel.h b/llvm/include/llvm/Support/Parallel.h
+index b0c9e8f29..4afc6905f 100644
+--- a/llvm/include/llvm/Support/Parallel.h
++++ b/llvm/include/llvm/Support/Parallel.h
+@@ -39,9 +39,10 @@ LLVM_ABI extern ThreadPoolStrategy strategy;
+          "ThreadPoolExecutor");                                                \
+   return threadIndex;
+ 
+-#ifdef _WIN32
++#if defined(_WIN32) || defined(__MVS__)
+ // Direct access to thread_local variables from a different DLL isn't
+ // possible with Windows Native TLS.
++// z/OS does not support thread-local storage
+ LLVM_ABI unsigned getThreadIndex();
+ #else
+ // Don't access this directly, use the getThreadIndex wrapper.

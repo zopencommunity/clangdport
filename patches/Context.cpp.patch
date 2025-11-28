@@ -1,0 +1,65 @@
+diff --git a/clang-tools-extra/clangd/support/Context.cpp b/clang-tools-extra/clangd/support/Context.cpp
+index 266dd003f..0fb42f7b8 100644
+--- a/clang-tools-extra/clangd/support/Context.cpp
++++ b/clang-tools-extra/clangd/support/Context.cpp
+@@ -9,6 +9,10 @@
+ #include "support/Context.h"
+ #include <cassert>
+ 
++#ifdef __MVS__
++#include <pthread.h>
++#endif
++
+ namespace clang {
+ namespace clangd {
+ 
+@@ -19,11 +23,49 @@ Context::Context(std::shared_ptr<const Data> DataPtr)
+ 
+ Context Context::clone() const { return Context(DataPtr); }
+ 
++#ifdef __MVS__
++// z/OS does not support thread_local storage.
++// Use POSIX Thread-Specific Data (TSD) instead.
++
++namespace {
++
++static pthread_key_t contextKey;
++static pthread_once_t contextKeyOnce = PTHREAD_ONCE_INIT;
++
++// Destructor called when a thread exits
++static void destroyContext(void *ptr) {
++  delete static_cast<Context *>(ptr);
++}
++
++// Initialize the pthread key once
++static void createContextKey() {
++  pthread_key_create(&contextKey, destroyContext);
++}
++
++} // anonymous namespace
++
++static Context &currentContext() {
++  pthread_once(&contextKeyOnce, createContextKey);
++
++  Context *C = static_cast<Context *>(pthread_getspecific(contextKey));
++  if (!C) {
++    // First access in this thread - create a new Context
++    C = new Context(Context::empty());
++    pthread_setspecific(contextKey, C);
++  }
++  return *C;
++}
++
++#else
++// Non-z/OS platforms: use thread_local
++
+ static Context &currentContext() {
+   static thread_local auto C = Context::empty();
+   return C;
+ }
+ 
++#endif // __MVS__
++
+ const Context &Context::current() { return currentContext(); }
+ 
+ Context Context::swapCurrent(Context Replacement) {

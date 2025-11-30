@@ -1,0 +1,14 @@
+diff --git a/clang-tools-extra/clangd/tool/ClangdMain.cpp b/clang-tools-extra/clangd/tool/ClangdMain.cpp
+index f287439f1..5e17e9f67 100644
+--- a/clang-tools-extra/clangd/tool/ClangdMain.cpp
++++ b/clang-tools-extra/clangd/tool/ClangdMain.cpp
+@@ -1019,7 +1019,9 @@ clangd accepts flags on the commandline, and in the CLANGD_FLAGS environment var
+ 
+   // Initialize and run ClangdLSPServer.
+   // Change stdin to binary to not lose \r\n on windows.
++#ifndef __MVS__
+   llvm::sys::ChangeStdinToBinary();
++#endif
+   std::unique_ptr<Transport> TransportLayer;
+   if (getenv("CLANGD_AS_XPC_SERVICE")) {
+ #if CLANGD_BUILD_XPC

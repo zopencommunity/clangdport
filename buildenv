@@ -1,5 +1,5 @@
 # bump: clangd-version /CLANGD_VERSION="(.*)"/ https://github.com/llvm/llvm-project.git|semver:*
-export CLANGD_VERSION="21.1.8"
+export CLANGD_VERSION="22.1.1"
 export ZOPEN_STABLE_TAG="llvmorg-${CLANGD_VERSION}"
 
 ###
